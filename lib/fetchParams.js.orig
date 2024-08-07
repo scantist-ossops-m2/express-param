@@ -8,21 +8,15 @@ var TYPE_DELIMETER = ':'
   , extraOption;
 
 function getValue(req, keyName) {
-  var value;
-
   if (req.params && req.params[keyName] !== undefined) {
-    value = req.params[keyName];
+    return req.params[keyName];
   } else if (req.body && req.body[keyName] !== undefined) {
-    value = req.body[keyName];
+    return req.body[keyName];
   } else if (req.query && req.query[keyName] !== undefined) {
-    value = req.query[keyName];
+    return req.query[keyName];
+  } else {
+    return undefined;
   }
-
-  if (Array.isArray(value)) {
-    value = value[value.length - 1];
-  }
-
-  return value;
 }
 
 function getPath(req, keyName) {
@@ -123,17 +117,6 @@ function getOptionalParams(req, option_expressions) {
 
     val = getFunc(req, key);
 
-    var typeMap = {
-      int: parseInt,
-      float: parseFloat,
-      number: parseFloat
-    };
-
-    var idx = Object.keys(typeMap).indexOf(keyInfo.type);
-    if (idx >= 0) {
-      options[key] = typeMap[keyInfo.type](val);
-    }
-
     if (keyInfo.type === 'number') {
       if (val !== undefined && val !== '')
         options[key] = parseFloat(val);
@@ -180,7 +163,7 @@ function requiredParameter(req, required_expressions) {
     , key
     , val;
 
-  for (var i = 0, li = required_expressions.length; i < li; i++) {
+  for (var i = 0, li = required_expressions.length; i <li ; i++) {
     var keyInfo;
     try {
       keyInfo = getRequiredKeyInfo(required_expressions[i]);
@@ -198,28 +181,13 @@ function requiredParameter(req, required_expressions) {
       getFunc = getValue;
 
     val = getFunc(req, key);
-
-    var typeMap = {
-      int: parseInt,
-      float: parseFloat,
-      number: parseFloat
-    };
-
-    var idx = Object.keys(typeMap).indexOf(keyInfo.type);
-    if (idx >= 0) {
+    if (keyInfo.type === 'number') {
       if (isNaN(val)) {
         err = new Error('The parameter value is not a number : ' + key);
         err.code = 400;
         break;
       }
-
-      if (keyInfo.type == 'int' && !_.isSafeInteger(val)) {
-        err = new Error('The parameter value is not a integer : ' + key);
-        err.code = 400;
-        break;
-      }
-
-      options[key] = typeMap[keyInfo.type](val);
+      options[key] = parseFloat(val);
     } else {
       options[key] = val;
     }
